@@ -68,7 +68,7 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(origin) == 0 {
-		errMsg := model.CreateOrderErrorResponse{"Missing origin"}
+		errMsg := model.CreateOrderErrorResponse{model.ERROR_MISSING_ORIGIN}
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errMsg)
 		return
@@ -80,18 +80,4 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errMsg)
 		return
 	}
-
-	/*
-		if len(req.Origin) == 0  {
-			errMsg := model.CreateOrderErrorResponse{"origin required"}
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(errMsg)
-			return
-		}
-		if len(req.Destination) == 0 {
-			errMsg := model.CreateOrderErrorResponse{"destination required"}
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(errMsg)
-			return
-		}*/
 }

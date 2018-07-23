@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/tonyStreet/projectOrder/model"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,16 +29,13 @@ func TestCreateOrder(t *testing.T) {
 	// Create a request to pass to our handler.
 	url := "/order"
 	requests := []TestRequest{
-		TestRequest{Request{"POST", `{"origin": "14.5995"}`}, Response{400, model.ERROR_ORIGIN_TYPE}},
-		TestRequest{Request{"POST",`{"origin": ["14.5995"]}`}, Response{400, model.ERROR_ORIGIN_VALUE}},
-		TestRequest{Request{"POST",`{"origin": ["14.5995","120.9842"]}`}, Response{400, model.ERROR_MISSING_DESTINATION}},
-		TestRequest{Request{"POST", `{"destination": "22.3390408802915"}`}, Response{400, model.ERROR_DESTINATION_TYPE}},
-		TestRequest{Request{"POST", `{"destination": ["22.3390408802915"]}`}, Response{400, model.ERROR_DESTINATION_VALUE}},
+		TestRequest{Request{"POST", `{"origin": "41.43206"}`}, Response{400, model.ERROR_ORIGIN_TYPE}},
+		TestRequest{Request{"POST", `{"origin": ["41.43206"]}`}, Response{400, model.ERROR_ORIGIN_VALUE}},
+		TestRequest{Request{"POST", `{"origin": ["41.43206","-81.38992"]}`}, Response{400, model.ERROR_MISSING_DESTINATION}},
+		TestRequest{Request{"POST", `{"destination": "40.714224"}`}, Response{400, model.ERROR_DESTINATION_TYPE}},
+		TestRequest{Request{"POST", `{"destination": ["40.714224"]}`}, Response{400, model.ERROR_DESTINATION_VALUE}},
+		TestRequest{Request{"POST", `{"destination": ["40.714224","-73.961452"]}`}, Response{400, model.ERROR_MISSING_ORIGIN}},
 	}
-
-	/*`{"origin":["44.968046"]}`,
-	`{"origin":["44.968046", "-94.420307"]}`,
-	`{"destination":["22.3390408802915", "114.1486719802915"]}`,*/
 
 	for _, r := range requests {
 		var jsonStr = []byte(r.Req.RequestBody)
@@ -70,6 +68,13 @@ func TestCreateOrder(t *testing.T) {
 			if response != expected {
 				t.Errorf("handler returned unexpected body: got %v want %v",
 					response, expected)
+			}
+		} else if rr.Code == http.StatusOK {
+			reqbody, err := ioutil.ReadAll(rr.Body)
+			var req map[string]interface{}
+			if err = json.Unmarshal(reqbody, &req); err != nil {
+				errMsg := model.CreateOrderErrorResponse{err.Error()}
+				t.Error(errMsg)
 			}
 		}
 	}
