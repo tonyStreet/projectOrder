@@ -14,7 +14,7 @@ const (
 	MAPS_API_KEY         = "AIzaSyCL2LEIXOFKsF_8zYg6SO48wSxpQb1StRg"
 )
 
-func GetDistance(origin string, destination string) (distance string, err error) {
+func GetDistance(origin string, destination string) (distance int64, err error) {
 	var netTransport = &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout: 5 * time.Second,
@@ -36,7 +36,7 @@ func GetDistance(origin string, destination string) (distance string, err error)
 		return distance, err
 	}
 	if direction.Status == "OK" && len(direction.Routes) > 0 {
-		distance = direction.Routes[0].Legs[0].Distance.Text
+		distance = direction.Routes[0].Legs[0].Distance.Value
 	}
 	return distance, err
 }

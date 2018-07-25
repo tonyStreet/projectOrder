@@ -13,7 +13,9 @@ import (
 func router() *mux.Router {
 	// router
 	r := mux.NewRouter()
-	r.HandleFunc("/order", handler.CreateOrder).Methods("POST")
+	r.HandleFunc("/order", handler.CreateOrder).Methods(http.MethodPost)
+	r.HandleFunc("/order/{id:[0-9]+}", handler.TakeOrderHandler).Methods(http.MethodPut)
+	r.HandleFunc("/orders", handler.ListOrderHandler).Queries("page", "{page:[0-9]+}", "limit", "{limit:[0-9]+}").Methods(http.MethodGet)
 
 	log.Print("url routes:")
 	r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

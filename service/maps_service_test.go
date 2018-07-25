@@ -7,7 +7,7 @@ func TestGetDistance(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	if distance != "442 mi" {
+	if distance != 710535 {
 		t.Fail()
 	}
 }

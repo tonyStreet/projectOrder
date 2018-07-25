@@ -3,10 +3,11 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/tonyStreet/projectOrder/db"
 	"github.com/tonyStreet/projectOrder/model"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -22,22 +23,24 @@ type Request struct {
 
 type Response struct {
 	Code         int
-	ResponseBody string
+	ResponseBody interface{}
 }
 
 func TestCreateOrder(t *testing.T) {
 	// Create a request to pass to our handler.
+	db.InitDB()
 	url := "/order"
 	requests := []TestRequest{
-		TestRequest{Request{"POST", `{"origin": "41.43206"}`}, Response{400, model.ERROR_ORIGIN_TYPE}},
-		TestRequest{Request{"POST", `{"origin": ["41.43206"]}`}, Response{400, model.ERROR_ORIGIN_VALUE}},
-		TestRequest{Request{"POST", `{"origin": ["41.43206","-81.38992"]}`}, Response{400, model.ERROR_MISSING_DESTINATION}},
-		TestRequest{Request{"POST", `{"destination": "40.714224"}`}, Response{400, model.ERROR_DESTINATION_TYPE}},
-		TestRequest{Request{"POST", `{"destination": ["40.714224"]}`}, Response{400, model.ERROR_DESTINATION_VALUE}},
-		TestRequest{Request{"POST", `{"destination": ["40.714224","-73.961452"]}`}, Response{400, model.ERROR_MISSING_ORIGIN}},
+		TestRequest{Request{"POST", `{"origin": "41.43206"}`}, Response{http.StatusBadRequest, model.ERROR_ORIGIN_TYPE}},
+		TestRequest{Request{"POST", `{"origin": ["41.43206"]}`}, Response{http.StatusBadRequest, model.ERROR_ORIGIN_VALUE}},
+		TestRequest{Request{"POST", `{"origin": ["41.43206","-81.38992"]}`}, Response{http.StatusBadRequest, model.ERROR_MISSING_DESTINATION}},
+		TestRequest{Request{"POST", `{"destination": "40.714224"}`}, Response{http.StatusBadRequest, model.ERROR_DESTINATION_TYPE}},
+		TestRequest{Request{"POST", `{"destination": ["40.714224"]}`}, Response{http.StatusBadRequest, model.ERROR_DESTINATION_VALUE}},
+		TestRequest{Request{"POST", `{"destination": ["40.714224","-73.961452"]}`}, Response{http.StatusBadRequest, model.ERROR_MISSING_ORIGIN}},
+		TestRequest{Request{"POST", `{"origin" : ["41.43206","-81.38992"], "destination": ["40.714224","-73.961452"]}`}, Response{http.StatusOK, model.Order{0, 710535, model.ORDER_STATUS_UNASSIGNED}}},
 	}
 
-	for _, r := range requests {
+	for testNum, r := range requests {
 		var jsonStr = []byte(r.Req.RequestBody)
 		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 		if err != nil {
@@ -55,8 +58,8 @@ func TestCreateOrder(t *testing.T) {
 
 		// Check the status code is what we expect.
 		if status := rr.Code; status != r.Res.Code {
-			t.Errorf("handler returned wrong status code: got %v want %v",
-				status, http.StatusOK)
+			t.Errorf("Test num: %v : create order  handler returned wrong status code: got %v want %v",
+				testNum, status, http.StatusOK)
 		}
 
 		// Check the response body is what we expect.
@@ -65,16 +68,23 @@ func TestCreateOrder(t *testing.T) {
 		if rr.Code == http.StatusBadRequest {
 			json.Unmarshal([]byte(rr.Body.String()), &responseBody)
 			response := responseBody["error"].(string)
-			if response != expected {
-				t.Errorf("handler returned unexpected body: got %v want %v",
-					response, expected)
+			if response != expected.(string) {
+				t.Errorf("Test num: %v : create order handler returned unexpected body: got %v want %v",
+					testNum, response, expected)
 			}
 		} else if rr.Code == http.StatusOK {
-			reqbody, err := ioutil.ReadAll(rr.Body)
-			var req map[string]interface{}
-			if err = json.Unmarshal(reqbody, &req); err != nil {
-				errMsg := model.CreateOrderErrorResponse{err.Error()}
-				t.Error(errMsg)
+			expectedResponse := expected.(model.Order)
+			res := model.Order{}
+			err := json.Unmarshal([]byte(rr.Body.String()), &res)
+			if err != nil {
+				t.Error(err.Error())
+			}
+			if res.ID == 0 {
+				t.Error("Create order request not saved in db")
+			}
+			expectedResponse.ID = res.ID
+			if !reflect.DeepEqual(res, expectedResponse) {
+				t.Fail()
 			}
 		}
 	}

@@ -24,8 +24,8 @@ type Bounds struct {
 
 type Leg struct {
 	Distance struct {
-		Text  string  `json:"text"`
-		Value float64 `json:"value"`
+		Text  string `json:"text"`
+		Value int64  `json:"value"`
 	}
 }
 
