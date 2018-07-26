@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func router() *mux.Router {
+func Router() *mux.Router {
 	// router
 	r := mux.NewRouter()
 	r.HandleFunc("/order", handler.CreateOrder).Methods(http.MethodPost)
@@ -43,7 +43,7 @@ func server() *http.Server {
 		Addr:         "0.0.0.0:8080",
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 233 * time.Second,
-		Handler:      handlers.CORS(originsOk, headersOk, methodsOk)(router()),
+		Handler:      handlers.CORS(originsOk, headersOk, methodsOk)(Router()),
 	}
 
 	return srv

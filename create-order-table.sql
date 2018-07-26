@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `update_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Date when the order was last updated',
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id` (`id`)
-) AUTO_INCREMENT = 40000000
+) AUTO_INCREMENT = 1
 COMMENT = 'Order information';

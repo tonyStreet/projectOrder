@@ -1,0 +1,6 @@
+google_maps_api_key: AIzaSyCL2LEIXOFKsF_8zYg6SO48wSxpQb1StRg
+db:
+    ip: 0.0.0.0:3306
+    user: order-app
+    password: 5sEjLqbLxs
+    name: logistics

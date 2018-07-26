@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"github.com/tonyStreet/projectOrder/config"
+	"github.com/gorilla/mux"
 )
 
 type TestRequest struct {
@@ -26,8 +28,11 @@ type Response struct {
 	ResponseBody interface{}
 }
 
+//Test Requires connection to db
 func TestCreateOrder(t *testing.T) {
 	// Create a request to pass to our handler.
+	confFile := "../config_test.yml"
+	config.InitConfig(confFile)
 	db.InitDB()
 	url := "/order"
 	requests := []TestRequest{
@@ -42,7 +47,7 @@ func TestCreateOrder(t *testing.T) {
 
 	for testNum, r := range requests {
 		var jsonStr = []byte(r.Req.RequestBody)
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+		req, err := http.NewRequest(r.Req.Method, url, bytes.NewBuffer(jsonStr))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -85,6 +90,99 @@ func TestCreateOrder(t *testing.T) {
 			expectedResponse.ID = res.ID
 			if !reflect.DeepEqual(res, expectedResponse) {
 				t.Fail()
+			}
+		}
+	}
+}
+
+
+func TestTakeOrderHandler(t *testing.T) {
+	// Create a request to pass to our handler.
+	confFile := "../config_test.yml"
+	config.InitConfig(confFile)
+	db.InitDB()
+	url := "/order/1"
+	requests := []TestRequest{
+		TestRequest{Request{"PUT", `{"status":"taken"}`}, Response{http.StatusOK, "success"}},
+	}
+
+	for testNum, r := range requests {
+		var jsonStr = []byte(r.Req.RequestBody)
+		req, err := http.NewRequest(r.Req.Method, url, bytes.NewBuffer(jsonStr))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+		rr := httptest.NewRecorder()
+
+		router := mux.NewRouter()
+
+		router.HandleFunc("/order/{id:[0-9]+}", TakeOrderHandler).Methods(http.MethodPut)
+
+		router.ServeHTTP(rr, req)
+
+		// Check the status code is what we expect.
+		if status := rr.Code; status != r.Res.Code {
+			t.Errorf("Test num: %v : take order  handler returned wrong status code: got %v want %v",
+				testNum, status, http.StatusOK)
+		}
+		// Check the response body is what we expect.
+		expected := r.Res.ResponseBody
+		var responseBody map[string]interface{}
+		if rr.Code == http.StatusOK {
+			json.Unmarshal([]byte(rr.Body.String()), &responseBody)
+			response := responseBody["status"].(string)
+			if response != expected {
+				t.Fail()
+			}
+		}
+	}
+}
+
+func TestListOrderHandler(t *testing.T) {
+	// Create a request to pass to our handler.
+	confFile := "../config_test.yml"
+	config.InitConfig(confFile)
+	db.InitDB()
+	url := "/orders?page=1&limit=10"
+	requests := []TestRequest{
+		TestRequest{Request{"GET", ``}, Response{http.StatusOK, ""}},
+	}
+
+	for testNum, r := range requests {
+		req, err := http.NewRequest(r.Req.Method, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+
+		router.HandleFunc("/orders", ListOrderHandler).Queries("page", "{page:[0-9]+}", "limit", "{limit:[0-9]+}").Methods(http.MethodGet)
+
+		router.ServeHTTP(rr, req)
+
+		// Check the status code is what we expect.
+		if status := rr.Code; status != r.Res.Code {
+			t.Errorf("Test num: %v : take order  handler returned wrong status code: got %v want %v",
+				testNum, status, http.StatusOK)
+		}
+
+		// Check the response body is what we expect.
+		var responseBody []model.Order
+		if rr.Code == http.StatusOK {
+			json.Unmarshal([]byte(rr.Body.String()), &responseBody)
+			if len(responseBody) > 10 {
+				t.Fail()
+			}
+			if len(responseBody) > 0 {
+				if responseBody[0].ID != 1 {
+					t.Fail()
+				}
 			}
 		}
 	}

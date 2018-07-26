@@ -114,7 +114,6 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 func TakeOrderHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-
 	reqbody, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -191,7 +190,7 @@ func TakeOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{status:"success"}`))
+	w.Write([]byte(`{"status":"success"}`))
 }
 
 func ListOrderHandler(w http.ResponseWriter, r *http.Request) {
