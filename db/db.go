@@ -11,7 +11,7 @@ var once sync.Once
 
 func InitDB() (err error) {
 	once.Do(func() {
-		dbip := "0.0.0.0:3306"
+		dbip := "192.168.0.2:3306"
 		dbuser := "order-app"
 		dbpassword := "5sEjLqbLxs"
 		dbname := "logistics"
